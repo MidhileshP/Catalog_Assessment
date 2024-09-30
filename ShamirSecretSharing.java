@@ -173,27 +173,46 @@ public class ShamirSecretSharing {
 
     // Main function to parse the JSON, find wrong points, and calculate the constant term
     public static void main(String[] args) {
-        String jsonFilePath = "input.json";
-        try (FileReader reader = new FileReader(jsonFilePath)) {
-            JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
-            ArrayList<Double> xList = new ArrayList<>();
-            ArrayList<Double> yList = new ArrayList<>();
-            extractXYValues(json, xList, yList);
-            double[] xArray = xList.stream().mapToDouble(Double::doubleValue).toArray();
-            double[] yArray = yList.stream().mapToDouble(Double::doubleValue).toArray();
-            int k = json.get("keys").getAsJsonObject().get("k").getAsInt();
-            List<int[]> wrongPoints = findWrongPoints(xArray, yArray, k);
-            if (wrongPoints.isEmpty()) {
-                System.out.println("No wrong points found.");
-            } else {
-                for (int[] point : wrongPoints) {
-                    System.out.println("Wrong point found: x = " + point[0] + ", y = " + point[1]);
+        String[] jsonFilePaths = {"testcase1.json", "testcase2.json"};
+        double constantTerm1 = 0.0;
+        double constantTerm2 = 0.0;
+
+        for (int i = 0; i < jsonFilePaths.length; i++) {
+            String jsonFilePath = jsonFilePaths[i];
+            try (FileReader reader = new FileReader(jsonFilePath)) {
+                JsonObject json = JsonParser.parseReader(reader).getAsJsonObject();
+                ArrayList<Double> xList = new ArrayList<>();
+                ArrayList<Double> yList = new ArrayList<>();
+                extractXYValues(json, xList, yList);
+                double[] xArray = xList.stream().mapToDouble(Double::doubleValue).toArray();
+                double[] yArray = yList.stream().mapToDouble(Double::doubleValue).toArray();
+                int k = json.get("keys").getAsJsonObject().get("k").getAsInt();
+                
+                // Calculate constant term for both test cases
+                if (i == 0) {
+                    constantTerm1 = qlConstantTerm(xArray, yArray);
+                } else {
+                    constantTerm2 = qlConstantTerm(xArray, yArray);
                 }
+
+                // Only find and print wrong points for testcase2
+                if (i == 1) {
+                    List<int[]> wrongPoints = findWrongPoints(xArray, yArray, k);
+                    if (wrongPoints.isEmpty()) {
+                        System.out.println("No wrong points found in " + jsonFilePath + ".");
+                    } else {
+                        for (int[] point : wrongPoints) {
+                            System.out.println("Wrong point found in " + jsonFilePath + ": x = " + point[0] + ", y = " + point[1]);
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                System.out.println("Error reading the JSON file " + jsonFilePath + ": " + e.getMessage());
             }
-            double constantTerm = qlConstantTerm(xArray, yArray);
-            System.out.println("Constant Term: " + constantTerm);
-        } catch (IOException e) {
-            System.out.println("Error reading the JSON file: " + e.getMessage());
         }
+
+        // Print the constant terms after processing both test cases
+        System.out.println("Constant Term for testcase1: " + constantTerm1);
+        System.out.println("Constant Term for testcase2: " + constantTerm2);
     }
 }
